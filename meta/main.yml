@@ -1,7 +1,7 @@
 galaxy_info:
   repo_name: pyramid_apps
   author: William Wu
-  description: Install dependency packages and setup ini / wsgi configuration files
+  description: Setup database and ini / wsgi configuration files
   company: PyLabs
   license: MIT
   min_ansible_version: 2.0
