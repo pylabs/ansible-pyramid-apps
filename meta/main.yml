@@ -1,5 +1,5 @@
 galaxy_info:
-  repo_name: pyramid_apps
+  role_name: pyramid_apps
   author: William Wu
   description: Setup database and ini / wsgi configuration files
   company: PyLabs
