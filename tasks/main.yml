@@ -1,0 +1,105 @@
+---
+- name: setting up pyramid apps
+  block:
+    - name: create pyramid apps database
+      script: "setup_dbs.sh {{ item.db_name }} {{ item.db_encoding }} {{ item.db_user }} {{ item.db_pass }}"
+      when: "item.db_name is defined"
+      loop: "{{ pyramid_apps }}"
+
+    - name: generate pyramid production config
+      template:
+        src: "production.ini.j2"
+        dest: "{{ item.base_dir }}/production.ini"
+        owner: "www-data"
+        group: "www-data"
+        mode: "0600"
+      loop: "{{ pyramid_apps }}"
+
+    - name: check if production configs exist
+      stat:
+        path: "{{ item.base_dir }}/production.ini.sample"
+      register: production_configs
+      loop: "{{ pyramid_apps }}"
+
+    - name: overwrite production config if project has its own ini config
+      copy:
+        remote_src: "yes"
+        src: "{{ item.0.base_dir }}/production.ini.sample"
+        dest: "{{ item.0.base_dir }}/production.ini"
+        owner: "www-data"
+        group: "www-data"
+        mode: "0600"
+      when: "item.1.stat.exists"
+      loop: "{{ pyramid_apps|zip(production_configs.results)|list }}"
+    
+    - name: generate alembic config
+      template:
+        src: "alembic.ini.j2"
+        dest: "{{ item.base_dir }}/alembic.ini"
+        owner: "www-data"
+        group: "www-data"
+        mode: "0600"
+      loop: "{{ pyramid_apps }}"
+
+    - name: check if alembic configs exist
+      stat:
+        path: "{{ item.base_dir }}/alembic.ini.sample"
+      register: "alembic_configs"
+      loop: "{{ pyramid_apps }}"
+
+    - name: overwrite alembic config if project has its own ini config
+      copy:
+        remote_src: "yes"
+        src: "{{ item.0.base_dir }}/alembic.ini.sample"
+        dest: "{{ item.0.base_dir }}/alembic.ini"
+        owner: "www-data"
+        group: "www-data"
+        mode: "0600"
+      when: "item.1.stat.exists"
+      loop: "{{ pyramid_apps|zip(alembic_configs.results)|list }}"
+
+    - name: run db migration
+      command: "{{ item.0.base_dir }}/.venv/bin/alembic upgrade head"
+      args:
+        chdir: "{{ item.0.base_dir }}"
+      when: "item.1.stat.exists"
+      loop: "{{ pyramid_apps|zip(alembic_configs.results)|list }}"
+
+    - name: generate nginx config
+      template:
+        src: "nginx_config.j2"
+        dest: "/etc/nginx/sites-available/{{ item.domain_name }}"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+      loop: "{{ pyramid_apps }}"
+    
+    - name: check if nginx configs exist
+      stat:
+        path: "{{ item.base_dir }}/nginx.config"
+      register: "nginx_configs"
+      loop: "{{ pyramid_apps }}"
+    
+    - name: overwrite nginx config
+      template:
+        src: "nginx_config.j2"
+        dest: "/etc/nginx/sites-available/{{ item.domain_name }}"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+      when: "item.1.stat.exists"
+      loop: "{{ pyramid_apps|zip(nginx_configs.results)|list }}"
+
+    - name: enable nginx config
+      file:
+        src: "/etc/nginx/sites-available/{{ item.domain_name }}"
+        dest: "/etc/nginx/sites-enabled/{{ item.domain_name }}"
+        state: link
+      loop: "{{ pyramid_apps }}"
+
+    - name: reload nginx
+      systemd:
+        name: "nginx"
+        state: "reloaded"
+  tags:
+    - pyramid_apps
