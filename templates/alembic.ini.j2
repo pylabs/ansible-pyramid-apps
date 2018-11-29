@@ -35,7 +35,7 @@ script_location = alembic
 # are written from script.py.mako
 # output_encoding = utf-8
 
-sqlalchemy.url = mysql+pymysql://{{ item.db_user }}:{{ item.db_pass }}@{{ item.db_host }}/{{ item.db_name }}?charset={{ item.db_encoding }}
+sqlalchemy.url = mysql+pymysql://{{ item.0.db_user }}:{{ item.0.db_pass }}@{{ item.0.db_host }}/{{ item.0.db_name }}?charset={{ item.0.db_encoding }}
 
 
 # Logging configuration
