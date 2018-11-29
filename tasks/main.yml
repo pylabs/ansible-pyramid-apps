@@ -1,10 +1,6 @@
 ---
 - name: setting up pyramid apps
   block:
-    - name: create pyramid apps database
-      script: "setup_dbs.sh {{ item.db_name }} {{ item.db_encoding }} {{ item.db_user }} {{ item.db_pass }}"
-      when: "item.db_name is defined"
-      loop: "{{ pyramid_apps }}"
 
     - name: generate pyramid production config
       template:
@@ -15,6 +11,12 @@
         mode: "0600"
       loop: "{{ pyramid_apps }}"
     
+    - name: check if alembic configs exist
+      stat:
+        path: "{{ item.base_dir }}/alembic.ini.sample"
+      register: "alembic_configs"
+      loop: "{{ pyramid_apps }}"
+
     - name: generate alembic config
       template:
         src: "alembic.ini.j2"
@@ -22,13 +24,13 @@
         owner: "www-data"
         group: "www-data"
         mode: "0600"
-      loop: "{{ pyramid_apps }}"
+      when: "item.1.stat.exists"
+      loop: "{{ pyramid_apps|zip(alembic_configs.results)|list }}"
 
-    - name: check if alembic configs exist
-      stat:
-        path: "{{ item.base_dir }}/alembic.ini.sample"
-      register: "alembic_configs"
-      loop: "{{ pyramid_apps }}"
+    - name: create project database
+      script: "setup_dbs.sh '{{ item.0.db_name }}' '{{ item.0.db_encoding }}' '{{ item.0.db_user }}' '{{ item.0.db_pass }}'"
+      when: "item.1.stat.exists"
+      loop: "{{ pyramid_apps|zip(alembic_configs.results)|list }}"
 
     - name: run db migration
       command: "{{ item.0.base_dir }}/.venv/bin/alembic upgrade head"
