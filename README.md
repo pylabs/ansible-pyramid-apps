@@ -16,6 +16,7 @@ pyramid_apps:
     db_user: DATABASE_USER
     db_pass: DATABASE_PASSWORD
     db_host: DATABASE_HOST
+    http2_enabled: BOOLEAN_WHICH_DENOTE_IF_ENABLE_HTTP2_IN_NGINX (yes or no)
 ```
 
 Dependencies
@@ -41,6 +42,7 @@ Example Playbook
         db_user: project1
         db_pass: project1pass
         db_host: localhost
+        http2_enabled: yes
       - domain_name: example.org
         project_name: project2
         base_dir: /srv/www/example.org
@@ -49,6 +51,7 @@ Example Playbook
         db_user: project2
         db_pass: project2pass
         db_host: "192.168.0.1"
+        http2_enabled: no
 ```
 
 License

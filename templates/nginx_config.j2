@@ -4,12 +4,27 @@ server {
 
     server_name {{ item.domain_name }};
 
+    {% if item.http2_enabled %}
     location /.well-known {
         alias /var/lib/dehydrated;
     }
 
     return 301 https://$server_name$request_uri;
+    {% else %}
+    client_max_body_size 20M;
+
+    location / {
+        include uwsgi_params;
+        uwsgi_pass unix:/run/uwsgi/{{ item.domain_name }}.sock;
+    }
+
+    location /static {
+        alias /srv/www/{{ item.domain_name }}/{{ item.project_name }}/static;
+    }
+
+    {% endif %}
 }
+{% if item.http2_enabled %}
 server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
@@ -41,3 +56,4 @@ server {
         alias /var/lib/dehydrated;
     }
 }
+{% endif %}
