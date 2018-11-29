@@ -20,7 +20,7 @@
     - name: generate alembic config
       template:
         src: "alembic.ini.j2"
-        dest: "{{ item.base_dir }}/alembic.ini"
+        dest: "{{ item.0.base_dir }}/alembic.ini"
         owner: "www-data"
         group: "www-data"
         mode: "0600"
