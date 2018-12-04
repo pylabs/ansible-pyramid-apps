@@ -10,6 +10,14 @@
         group: "www-data"
         mode: "0600"
       loop: "{{ pyramid_apps }}"
+
+    - name: setup session storage dir
+      file:
+        path: "{{ item.base_dir }}/data"
+        owner: "www-data"
+        group: "www-data"
+        mode: "0700"
+        state: "directory"
     
     - name: check if alembic configs exist
       stat:

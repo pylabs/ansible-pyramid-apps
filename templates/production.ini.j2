@@ -20,13 +20,15 @@ jinja2.filters =
     route_path = pyramid_jinja2.filters:route_path_filter
     static_path = pyramid_jinja2.filters:static_path_filter
 
-# session settings
-#
-# using builtin session mechanism
-sessions.secret = {{ lookup('password', '/dev/null length=64 chars=ascii_letters,digits') }}
-#
-# using pyramid_redis_sessions
-redis.sessions.secret = {{ lookup('password', '/dev/null length=64 chars=ascii_letters,digits') }}
+# pyramid_beaker
+session.type = file
+session.data_dir = %(here)s/data/sessions/data
+session.lock_dir = %(here)s/data/sessions/lock
+session.key = {{ lookup('password', '/dev/null length=64 chars=ascii_letters,digits') }}
+session.secret = {{ lookup('password', '/dev/null length=64 chars=ascii_letters,digits') }}
+session.cookie_on_exception = true
+
+{% if item.db_name %}
 
 # database settings
 #
@@ -35,6 +37,8 @@ redis.sessions.secret = {{ lookup('password', '/dev/null length=64 chars=ascii_l
 # The url syntax can be found here: http://docs.sqlalchemy.org/en/latest/core/engines.html
 #sqlalchemy.url = mysql+mysqlconnector://DB_USER:DB_PASS@DB_HOST/DB_NAME
 sqlalchemy.url = mysql+pymysql://{{ item.db_user }}:{{ item.db_pass }}@{{ item.db_host }}/{{ item.db_name }}?charset={{ item.db_encoding }}
+
+{% endif %}
 
 # By default, the toolbar only appears for clients from IP addresses
 # '127.0.0.1' and '::1'.
