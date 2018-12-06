@@ -18,6 +18,7 @@
         group: "www-data"
         mode: "0700"
         state: "directory"
+      loop: "{{ pyramid_apps }}"
     
     - name: check if alembic configs exist
       stat:
