@@ -20,6 +20,9 @@ jinja2.filters =
     route_path = pyramid_jinja2.filters:route_path_filter
     static_path = pyramid_jinja2.filters:static_path_filter
 
+# secret key for pyramid security framework                                                                                                                                                   
+auth.key = {{ lookup('password', '/dev/null length=64 chars=ascii_letters,digits') }}
+
 # pyramid_beaker
 session.type = file
 session.data_dir = %(here)s/data/sessions/data
