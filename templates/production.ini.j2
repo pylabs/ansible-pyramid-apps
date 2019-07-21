@@ -1,6 +1,6 @@
 ###
 # app configuration
-# http://docs.pylonsproject.org/projects/pyramid/en/1.5-branch/narr/environment.html
+# https://docs.pylonsproject.org/projects/pyramid/en/latest/narr/environment.html
 ###
 
 [app:main]
@@ -11,8 +11,6 @@ pyramid.debug_authorization = false
 pyramid.debug_notfound = false
 pyramid.debug_routematch = false
 
-production_mode = true
-
 # activate some useful filters of jinja2
 jinja2.filters =
     route_url = pyramid_jinja2.filters:route_url_filter
@@ -20,33 +18,29 @@ jinja2.filters =
     route_path = pyramid_jinja2.filters:route_path_filter
     static_path = pyramid_jinja2.filters:static_path_filter
 
-# secret key for pyramid security framework                                                                                                                                                   
-auth.key = {{ lookup('password', '/dev/null length=64 chars=ascii_letters,digits') }}
+# secret key for pyramid security framework
+auth.secret = {{ lookup('password', '/dev/null length=64 chars=ascii_letters,digits') }}
 
-# pyramid_beaker
+# pyramid_beaker settings
 session.type = file
 session.data_dir = %(here)s/data/sessions/data
 session.lock_dir = %(here)s/data/sessions/lock
-session.key = {{ lookup('password', '/dev/null length=64 chars=ascii_letters,digits') }}
+session.key = {{ item.project_name }}
 session.secret = {{ lookup('password', '/dev/null length=64 chars=ascii_letters,digits') }}
 session.cookie_on_exception = true
 
 {% if item.db_name %}
-
-# database settings
-#
-# Note that you need to install the real database driver
-# by yourself, like mysql-connector-python.
-# The url syntax can be found here: http://docs.sqlalchemy.org/en/latest/core/engines.html
-#sqlalchemy.url = mysql+mysqlconnector://DB_USER:DB_PASS@DB_HOST/DB_NAME
 sqlalchemy.url = mysql+pymysql://{{ item.db_user }}:{{ item.db_pass }}@{{ item.db_host }}/{{ item.db_name }}?charset={{ item.db_encoding }}
+sqlalchemy.pool_recycle = 3600
 
+retry.attempts = 3
+
+[alembic]
+# path to migration scripts
+script_location = {{ item.base_dir }}/{{ item.project_name }}/alembic
+file_template = %%(year)d%%(month).2d%%(day).2d_%%(rev)s
+# file_template = %%(rev)s_%%(slug)s
 {% endif %}
-
-# By default, the toolbar only appears for clients from IP addresses
-# '127.0.0.1' and '::1'.
-#debugtoolbar.hosts = 127.0.0.1 ::1
-
 
 ###
 # wsgi server configuration
@@ -54,16 +48,15 @@ sqlalchemy.url = mysql+pymysql://{{ item.db_user }}:{{ item.db_pass }}@{{ item.d
 
 [server:main]
 use = egg:waitress#main
-host = 0.0.0.0
-port = 6543
+listen = *:6543
 
 ###
 # logging configuration
-# http://docs.pylonsproject.org/projects/pyramid/en/1.5-branch/narr/logging.html
+# https://docs.pylonsproject.org/projects/pyramid/en/latest/narr/logging.html
 ###
 
 [loggers]
-keys = root, {{ item.project_name }}
+keys = root, {{ item.project_name }}, sqlalchemy, alembic
 
 [handlers]
 keys = console
@@ -72,13 +65,26 @@ keys = console
 keys = generic
 
 [logger_root]
-level = INFO
+level = WARN
 handlers = console
 
 [logger_{{ item.project_name }}]
-level = DEBUG
+level = WARN
 handlers =
 qualname = {{ item.project_name }}
+
+[logger_sqlalchemy]
+level = WARN
+handlers =
+qualname = sqlalchemy.engine
+# "level = INFO" logs SQL queries.
+# "level = DEBUG" logs SQL queries and results.
+# "level = WARN" logs neither.  (Recommended for production systems.)
+
+[logger_alembic]
+level = INFO
+handlers =
+qualname = alembic
 
 [handler_console]
 class = StreamHandler
@@ -87,4 +93,4 @@ level = NOTSET
 formatter = generic
 
 [formatter_generic]
-format = %(asctime)s %(levelname)-5.5s [%(name)s][%(threadName)s] %(message)s
+format = %(asctime)s %(levelname)-5.5s [%(name)s:%(lineno)s][%(threadName)s] %(message)s
