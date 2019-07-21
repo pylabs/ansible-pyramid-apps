@@ -16,3 +16,4 @@ galaxy_info:
 dependencies:
   - pylabs.nginx
   - pylabs.python_wsgiapps
+  - pylabs.mariadb
