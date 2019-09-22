@@ -23,7 +23,7 @@
     - name: check if alembic configs exist
       lineinfile:
         path: "{{ item.base_dir }}/production.ini"
-        regexp: "^\[alembic\]"
+        regexp: '^\[alembic\]'
         state: "present"
       check_mode: "yes"
       changed_when: "false"
