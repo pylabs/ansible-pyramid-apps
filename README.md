@@ -24,6 +24,7 @@ Dependencies
 
 - pylabs.nginx
 - pylabs.python_wsgiapps
+- pylabs.mariadb
 
 Example Playbook
 ----------------
@@ -62,4 +63,4 @@ MIT
 Author Information
 ------------------
 
-William Wu
+William Wu <william@pylabs.org>
