@@ -19,28 +19,25 @@
         mode: "0700"
         state: "directory"
       loop: "{{ pyramid_apps }}"
-    
+
     - name: check if alembic configs exist
-      lineinfile:
-        path: "{{ item.base_dir }}/production.ini"
-        regexp: '^\[alembic\]'
-        line: '[alembic]'
-        state: "present"
-      check_mode: "yes"
-      changed_when: "false"
+      find:
+        path: "{{ item.base_dir }}"
+        pattern: "production.ini"
+        contains: '^\[alembic\]'
       register: "alembic_configs"
       loop: "{{ pyramid_apps }}"
 
     - name: create project database
       script: "setup_dbs.sh '{{ item.0.db_name }}' '{{ item.0.db_encoding }}' '{{ item.0.db_user }}' '{{ item.0.db_pass }}'"
-      when: "not item.1.changed"
+      when: "item.1.matched"
       loop: "{{ pyramid_apps|zip(alembic_configs.results)|list }}"
 
     - name: run db migration
       command: "{{ item.0.base_dir }}/.venv/bin/alembic -c production.ini upgrade head"
       args:
         chdir: "{{ item.0.base_dir }}"
-      when: "not item.1.changed"
+      when: "item.1.matched"
       loop: "{{ pyramid_apps|zip(alembic_configs.results)|list }}"
 
     - name: generate nginx config
