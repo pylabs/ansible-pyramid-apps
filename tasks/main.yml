@@ -31,14 +31,14 @@
     - name: create project database
       script: "setup_dbs.sh '{{ item.0.db_name }}' '{{ item.0.db_encoding }}' '{{ item.0.db_user }}' '{{ item.0.db_pass }}'"
       when: "item.1.matched"
-      loop: "{{ pyramid_apps|zip(alembic_configs.results)|list }}"
+      loop: "{{ pyramid_apps|zip(alembic_configs)|list }}"
 
     - name: run db migration
       command: "{{ item.0.base_dir }}/.venv/bin/alembic -c production.ini upgrade head"
       args:
         chdir: "{{ item.0.base_dir }}"
       when: "item.1.matched"
-      loop: "{{ pyramid_apps|zip(alembic_configs.results)|list }}"
+      loop: "{{ pyramid_apps|zip(alembic_configs)|list }}"
 
     - name: generate nginx config
       template:
