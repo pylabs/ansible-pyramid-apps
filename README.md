@@ -7,9 +7,11 @@ Role Variables
 --------------
 
 ```yaml
+pyramid_apps_base_dir: YOUR BASE DIR (default: /srv/www)
 pyramid_apps:
   - domain_name: DOMAIN_NAME
     project_name: PROJECT_NAME
+    repo_url: SCM_REPO_URL
     base_dir: PYRAMID_APP_BASE_DIR
     db_name: DATABASE_NAME
     db_encoding: DATABASE_ENCODING
@@ -22,8 +24,10 @@ pyramid_apps:
 Dependencies
 ------------
 
+- pylabs.python3
+- pylabs.uwsgi
+- pylabs.add_ssh_known_hosts
 - pylabs.nginx
-- pylabs.python_wsgiapps
 - pylabs.mariadb
 
 Example Playbook
@@ -37,6 +41,7 @@ Example Playbook
     pyramid_apps:
       - domain_name: example.com
         project_name: project1
+        repo_url: git@github.com/foo/bar.git
         base_dir: /srv/www/example.com
         db_name: project1
         db_encoding: utf8mb4
@@ -46,6 +51,7 @@ Example Playbook
         http2_enabled: yes
       - domain_name: example.org
         project_name: project2
+        repo_url: git@github.com/bar/foo.git
         base_dir: /srv/www/example.org
         db_name: project2
         db_encoding: utf8

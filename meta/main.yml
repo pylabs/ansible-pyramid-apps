@@ -11,9 +11,13 @@ galaxy_info:
     - Buster
     - 10
   galaxy_tags:
-    - python
+    - python3
     - pyramid
+    - wsgi
+    - debian
 dependencies:
+  - pylabs.python3
+  - pylabs.uwsgi
+  - pylabs.add_ssh_known_hosts
   - pylabs.nginx
-  - pylabs.python_wsgiapps
   - pylabs.mariadb

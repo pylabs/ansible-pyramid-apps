@@ -1,7 +1,56 @@
 ---
 - name: setting up pyramid apps
   block:
-
+    - name: install scm packages
+      apt: "name={{ packages }} state=latest"
+      vars:
+        packages:
+          - git
+    - name: create web root dir
+      file:
+        path: "{{ pyramid_apps_base_dir }}"
+        state: "directory"
+        recurse: "yes"
+        mode: "0711"
+        owner: "root"
+        group: "root"
+    - name: checkout source code via scm
+      command: "git clone {{ item.repo_url }} {{ item.base_dir }}"
+      args:
+        creates: "{{ item.base_dir }}"
+      loop: "{{ pyramid_apps }}"
+    - name: create virtualenv under the project directory
+      command: "python3 -m venv {{ item.base_dir }}/.venv"
+      loop: "{{ pyramid_apps }}"
+    - name: install poetry package
+      command: "{{ item.base_dir }}/.venv/bin/pip install poetry"
+      loop: "{{ pyramid_apps }}"
+    - name: install project dependency packages
+      command: "{{ item.base_dir }}/.venv/bin/poetry install"
+      args:
+        chdir: "{{ item.base_dir }}"
+      loop: "{{ pyramid_apps }}"
+    - name: fetch cpu count
+      shell: "cat /proc/cpuinfo | grep ^processor | wc -l"
+      register: cpu_count
+    - name: setup wsgi configuration of the project
+      copy:
+        remote_src: "yes"
+        src: "{{ item.base_dir }}/wsgi.py.sample"
+        dest: "{{ item.base_dir }}/wsgi.py"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+      loop: "{{ pyramid_apps }}"
+    - name: install uwsgi configuration of the project
+      template:
+        src: "uwsgi.ini.j2"
+        dest: "/opt/uwsgi/etc/{{ item.domain_name }}.ini" 
+      loop: "{{ pyramid_apps }}"
+    - name: restart uwsgi
+      systemd:
+        name: uwsgi.service
+        state: restarted
     - name: generate pyramid production config
       template:
         src: "production.ini.j2"
@@ -10,7 +59,6 @@
         group: "www-data"
         mode: "0600"
       loop: "{{ pyramid_apps }}"
-
     - name: setup session storage dir
       file:
         path: "{{ item.base_dir }}/data"
@@ -19,7 +67,6 @@
         mode: "0700"
         state: "directory"
       loop: "{{ pyramid_apps }}"
-
     - name: check if alembic configs exist
       find:
         path: "{{ item.base_dir }}"
@@ -27,19 +74,16 @@
         contains: '^\[alembic\]'
       register: "alembic_configs"
       loop: "{{ pyramid_apps }}"
-
     - name: create project database
       script: "setup_dbs.sh '{{ item.0.db_name }}' '{{ item.0.db_encoding }}' '{{ item.0.db_user }}' '{{ item.0.db_pass }}'"
       when: "item.1.matched"
       loop: "{{ pyramid_apps|zip(alembic_configs)|list }}"
-
     - name: run db migration
       command: "{{ item.0.base_dir }}/.venv/bin/alembic -c production.ini upgrade head"
       args:
         chdir: "{{ item.0.base_dir }}"
       when: "item.1.matched"
       loop: "{{ pyramid_apps|zip(alembic_configs)|list }}"
-
     - name: generate nginx config
       template:
         src: "nginx_config.j2"
@@ -48,14 +92,12 @@
         group: "root"
         mode: "0644"
       loop: "{{ pyramid_apps }}"
-
     - name: enable nginx config
       file:
         src: "/etc/nginx/sites-available/{{ item.domain_name }}"
         dest: "/etc/nginx/sites-enabled/{{ item.domain_name }}"
         state: link
       loop: "{{ pyramid_apps }}"
-
     - name: reload nginx
       systemd:
         name: "nginx"
