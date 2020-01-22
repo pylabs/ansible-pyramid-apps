@@ -18,7 +18,7 @@ pyramid_apps:
     db_user: DATABASE_USER
     db_pass: DATABASE_PASSWORD
     db_host: DATABASE_HOST
-    ssl_enabled: BOOLEAN_WHICH_DENOTE_IF_ENABLE_SSL_IN_NGINX (yes or no)
+    ssl_enabled: BOOLEAN_WHICH_DENOTE_IF_ENABLE_SSL_IN_NGINX (yes or no, default is yes)
 ```
 
 Dependencies

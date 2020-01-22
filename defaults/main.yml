@@ -1,2 +1,3 @@
 ---
 pyramid_apps_base_dir: /srv/www
+ssl_enabled: yes
